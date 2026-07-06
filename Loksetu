@@ -1,1 +1,250 @@
+LokSetu
 
+«India's Open Public Administration Directory»
+
+"Version" (https://img.shields.io/badge/version-v0.1.0-blue)
+"Status" (https://img.shields.io/badge/status-Karnataka%20MVP-green)
+"License" (https://img.shields.io/badge/license-Apache--2.0-orange)
+
+---
+
+Vision
+
+LokSetu is an open, citizen-centric platform that organizes officially published information about public offices, elected representatives, public services, official contact channels, and grievance mechanisms across India.
+
+The objective is to make it easier for every citizen to identify:
+
+- Which public office is responsible for a service.
+- How to contact that office through officially published channels.
+- Which authority to approach if a grievance is not resolved.
+- Where the official information originated.
+
+LokSetu is built using only officially published public information from authentic government sources.
+
+---
+
+Project Objectives
+
+- Build a nationwide directory of public offices.
+- Publish only officially available public contact information.
+- Organize government administrative structures.
+- Map public services to responsible offices.
+- Display official grievance escalation mechanisms.
+- Maintain complete source attribution and audit history.
+- Support multilingual access.
+- Provide open APIs for civic innovation.
+
+---
+
+Guiding Principles
+
+Office First
+
+LokSetu models public offices, not individuals.
+
+Office holders may change over time, but the office remains the permanent civic entity.
+
+---
+
+Official Sources Only
+
+Every published record must originate from an official public source, such as:
+
+- Government websites
+- Official department directories
+- Gazette notifications
+- RTI proactive disclosures
+- Official helpline publications
+
+---
+
+Complete Traceability
+
+Every published field can be traced back to:
+
+- Source
+- Publication
+- Verification
+- Last review
+
+---
+
+Open by Default
+
+Verified public information should be openly accessible to every citizen.
+
+---
+
+Karnataka MVP Scope
+
+The first public release covers Karnataka.
+
+Initial departments include:
+
+- Revenue Department
+- Forest Department
+- Excise Department
+- Health Department
+- Education Department
+- Public-facing offices of the Home Department
+- State and district helplines
+- Emergency services
+- Elected representatives (from Gram Panchayat to the President of India)
+
+Sensitive operational or non-public entities are outside the scope.
+
+---
+
+Core Features
+
+- Administrative hierarchy
+- Organization hierarchy
+- Office registry
+- Designation registry
+- Public contact directory
+- Official addresses
+- Public services
+- Grievance routing
+- Official source registry
+- Verification workflow
+- Search API
+- Public REST API
+- OpenAPI documentation
+
+---
+
+Technology Stack
+
+Backend
+
+- Python 3.12+
+- FastAPI
+- SQLAlchemy
+- Alembic
+
+Database
+
+- PostgreSQL
+- PostGIS
+- pg_trgm
+
+Search
+
+- OpenSearch
+
+Infrastructure
+
+- Docker
+- Docker Compose
+- GitHub Actions
+
+---
+
+Repository Structure
+
+LokSetu/
+
+apps/
+packages/
+database/
+infrastructure/
+docs/
+scripts/
+tests/
+
+---
+
+Data Principles
+
+LokSetu stores information about:
+
+- Organizations
+- Administrative units
+- Public offices
+- Public services
+- Official contact channels
+- Official addresses
+- Helplines
+- Grievance authorities
+- Official documents
+- Data sources
+
+LokSetu does not publish personal or operational information that is not officially disclosed for public use.
+
+---
+
+Roadmap
+
+Version 0.1
+
+Repository Bootstrap
+
+Version 0.2
+
+Database Foundation
+
+Version 0.3
+
+Backend APIs
+
+Version 0.4
+
+Karnataka Revenue Department
+
+Version 0.5
+
+Citizen Search
+
+Version 0.6
+
+Additional Karnataka Departments
+
+Version 1.0
+
+Karnataka MVP
+
+Version 2.0
+
+Pan-India Expansion
+
+---
+
+Contributing
+
+Contributions are welcome.
+
+Please read:
+
+- CONTRIBUTING.md
+- CODE_OF_CONDUCT.md
+- SECURITY.md
+
+before submitting pull requests.
+
+---
+
+License
+
+This project is licensed under the Apache License 2.0.
+
+---
+
+Disclaimer
+
+LokSetu republishes and organizes only officially published public information obtained from authentic government sources. The platform does not claim ownership over government publications and does not replace the official websites or portals of government departments.
+
+Users should always refer to the originating government authority for legally binding information, notifications, and decisions.
+
+---
+
+Project Status
+
+Current Phase: Sprint 2 – Backend Foundation
+
+Target Release: Karnataka MVP (v1.0.0)
+
+---
+
+LokSetu
+
+"Connecting Citizens with Public Administration."
