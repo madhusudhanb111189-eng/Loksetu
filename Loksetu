@@ -808,3 +808,208 @@ volumes:
   redis_data:
 
   opensearch_data:
+"""
+LokSetu D1 Bootstrap Installer
+Generates complete project structure for AdministrativeUnit module
+"""
+
+import os
+
+PROJECT_FILES = {
+"apps/api/app/db/base.py": """
+from sqlalchemy import MetaData
+from sqlalchemy.orm import DeclarativeBase
+
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+metadata = MetaData(naming_convention=NAMING_CONVENTION)
+
+class Base(DeclarativeBase):
+    metadata = metadata
+""",
+
+"apps/api/app/db/mixins.py": """
+import uuid
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+class UUIDMixin:
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+class PublicIdMixin:
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+
+class AuditMixin:
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class VersionMixin:
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
+class ActiveMixin:
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+class VerificationMixin:
+    verification_status: Mapped[str] = mapped_column(String(30), default="PENDING")
+    verified_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class EffectiveDateMixin:
+    effective_from: Mapped[Date | None] = mapped_column(Date, nullable=True)
+    effective_to: Mapped[Date | None] = mapped_column(Date, nullable=True)
+
+class SourceMixin:
+    source_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+
+class BaseModel(
+    UUIDMixin,
+    PublicIdMixin,
+    AuditMixin,
+    VersionMixin,
+    ActiveMixin,
+    VerificationMixin,
+    EffectiveDateMixin,
+    SourceMixin,
+):
+    __abstract__ = True
+""",
+
+"apps/api/app/db/session.py": """
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine('sqlite:///loksetu.db', future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+""",
+
+"apps/api/app/models/administrative_unit.py": """
+from sqlalchemy import String, ForeignKey, Numeric, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.db.base import Base
+from app.db.mixins import BaseModel
+
+class AdministrativeUnit(BaseModel, Base):
+    __tablename__ = "administrative_units"
+
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    level_code: Mapped[str] = mapped_column(String(40))
+    parent_id: Mapped[str | None] = mapped_column(ForeignKey("administrative_units.id"))
+
+    latitude: Mapped[float | None] = mapped_column(Numeric(10,7))
+    longitude: Mapped[float | None] = mapped_column(Numeric(10,7))
+
+    parent = relationship("AdministrativeUnit", remote_side="AdministrativeUnit.id")
+
+    __table_args__ = (
+        Index("ix_admin_parent_level", "parent_id", "level_code"),
+    )
+""",
+
+"apps/api/app/repositories/base_repository.py": """
+class BaseRepository:
+    def __init__(self, model):
+        self.model = model
+
+    def get(self, db, id):
+        return db.get(self.model, id)
+
+    def create(self, db, obj):
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return obj
+""",
+
+"apps/api/app/schemas/administrative_unit.py": """
+from pydantic import BaseModel
+from typing import Optional
+from uuid import UUID
+
+class AdministrativeUnitBase(BaseModel):
+    code: str
+    name: str
+    level_code: str
+    parent_id: Optional[UUID] = None
+
+class AdministrativeUnitCreate(AdministrativeUnitBase):
+    pass
+
+class AdministrativeUnitRead(AdministrativeUnitBase):
+    id: UUID
+    public_id: str
+
+    class Config:
+        from_attributes = True
+""",
+
+"apps/api/app/services/administrative_unit_service.py": """
+from app.models.administrative_unit import AdministrativeUnit
+from app.repositories.base_repository import BaseRepository
+
+repo = BaseRepository(AdministrativeUnit)
+
+class AdministrativeUnitService:
+    def create(self, db, data):
+        obj = AdministrativeUnit(**data.model_dump())
+        return repo.create(db, obj)
+""",
+
+"apps/api/app/api/v1/administrative_units.py": """
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.schemas.administrative_unit import AdministrativeUnitCreate, AdministrativeUnitRead
+from app.services.administrative_unit_service import AdministrativeUnitService
+
+router = APIRouter(prefix="/administrative-units", tags=["Administrative Units"])
+
+service = AdministrativeUnitService()
+
+@router.post("", response_model=AdministrativeUnitRead)
+def create(payload: AdministrativeUnitCreate, db: Session = Depends(get_db)):
+    return service.create(db, payload)
+""",
+
+"apps/api/app/main.py": """
+from fastapi import FastAPI
+from app.api.v1.administrative_units import router as au_router
+
+app = FastAPI(title="LokSetu D1")
+
+app.include_router(au_router)
+""",
+
+"requirements.txt": """
+fastapi
+sqlalchemy
+uvicorn
+pydantic
+"""
+}
+
+
+def write_files():
+    for path, content in PROJECT_FILES.items():
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content.strip())
+
+    print("LokSetu D1 generated successfully!")
+
+
+if __name__ == "__main__":
+    write_files()
