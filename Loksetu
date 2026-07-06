@@ -665,3 +665,146 @@ FEATURE_WEB_PORTAL=false
 DEFAULT_STATE=Karnataka
 
 DEFAULT_COUNTRY=India
+version: "3.9"
+
+name: loksetu
+
+services:
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: loksetu-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: loksetu-redis
+
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+  opensearch:
+
+    image: opensearchproject/opensearch:2
+
+    container_name: loksetu-opensearch
+
+    restart: unless-stopped
+
+    environment:
+
+      discovery.type: single-node
+
+      plugins.security.disabled: "true"
+
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+    ports:
+
+      - "9200:9200"
+
+      - "9600:9600"
+
+    volumes:
+
+      - opensearch_data:/usr/share/opensearch/data
+
+  api:
+
+    build:
+
+      context: .
+
+      dockerfile: apps/api/Dockerfile
+
+    container_name: loksetu-api
+
+    restart: unless-stopped
+
+    env_file:
+
+      - .env
+
+    depends_on:
+
+      postgres:
+
+        condition: service_healthy
+
+      redis:
+
+        condition: service_started
+
+      opensearch:
+
+        condition: service_started
+
+    ports:
+
+      - "8000:8000"
+
+    volumes:
+
+      - .:/workspace
+
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+  pgadmin:
+
+    image: dpage/pgadmin4
+
+    container_name: loksetu-pgadmin
+
+    restart: unless-stopped
+
+    environment:
+
+      PGADMIN_DEFAULT_EMAIL: admin@loksetu.local
+
+      PGADMIN_DEFAULT_PASSWORD: admin
+
+    ports:
+
+      - "5050:80"
+
+    depends_on:
+
+      postgres:
+
+        condition: service_healthy
+
+volumes:
+
+  postgres_data:
+
+  redis_data:
+
+  opensearch_data:
